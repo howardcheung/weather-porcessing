@@ -12,6 +12,9 @@
 
 # internal modules
 from datetime import date
+import gzip
+from os import remove
+import tarfile
 
 # third party modules
 import pandas as pd
@@ -43,6 +46,11 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
             max_tmp: maximum temperature in K
             min_tmp: minimum temperature in K
             prec: precipatation in mm
+
+        Inputs:
+        ==========
+        gzfilename: str
+            path to op file containing the gsod file of a station
     """
 
     # read the file first
@@ -60,7 +68,6 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
 
     # assign columns
     ori_df.loc[:, 'stn'] = raw_df[0]
-    print(raw_df[2])
     ori_df.loc[:, 'date'] = [
         date(int(str(text)[0:4]), int(str(text)[4:6]), int(str(text)[6:8]))
         for text in raw_df[2]
@@ -92,10 +99,60 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
     return ori_df
 
 
+def unzip_gsod_files(tarfilename: str, numfile: float=float('nan')) -> list:
+    """
+        This function reads the gsod files stored in the designated tar file
+        and returns a dict of pandas DataFrame objects that contains all the
+        data of the files with the station number being the key of the dict
+
+        Inputs:
+        ==========
+        tarfilename: str
+            path to the tar file of gsod files
+
+        numfile: float
+            number of files to be read. Default float('inf') which means that
+            all files will be read
+    """
+
+    # create empty list
+    dfdict = {}
+
+    # read the fire directory in the zipped file
+    num = 0
+    with tarfile.open(tarfilename, 'r') as maintar:
+        for maintarinfo in maintar:
+            # extract one file at a time. One file for one station.
+            # to reduce storage requirement
+            if '.gz' in maintarinfo.name:
+                maintar.extractall(members=[maintarinfo])
+                # now read the extracted file
+                with gzip.open(maintarinfo.name) as fopened:
+                    df = read_gsod_file(fopened)
+                    dfdict[df['stn'][0]] = df
+                    num += 1
+                # remove file
+                remove(maintarinfo.name)
+            if num > numfile:
+                break
+
+    # return the dataframe
+    return dfdict
+
+
 # testing functions
 if __name__ == '__main__':
 
-    TEST_DF = read_gsod_file('../data/gsod/010460-99999-2016.op')
+    # test the gsod file reading function
+    TEST_DF = read_gsod_file('../data/gsod/test.op')
     print(TEST_DF)
     assert isinstance(TEST_DF, pd.DataFrame)
+
+    # test the gsod file tarball reader
+    DF_DICT = unzip_gsod_files('../data/gsod/gsod_2016.tar', numfile=2)
+    print(DF_DICT)
+    assert isinstance(DF_DICT, dict)
+    assert isinstance(DF_DICT[[
+        ind for ind in DF_DICT.keys()
+    ][0]], pd.DataFrame)
     print('read_gsod_data.py is ok')
