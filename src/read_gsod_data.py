@@ -46,6 +46,7 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
             max_tmp: maximum temperature in K
             min_tmp: minimum temperature in K
             prec: precipatation in mm
+            sndp: snowfall in mm
 
         Inputs:
         ==========
@@ -95,6 +96,8 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
         float(ind[:-1])*25.4 if ind != '99.99' else float('nan')
         for ind in raw_df[19]
     ]
+    # invalid values replaced by 0 snowfall
+    ori_df.loc[:, 'sndp'] = raw_df[20].replace(999.9, 0.0)*25.4
 
     return ori_df
 
