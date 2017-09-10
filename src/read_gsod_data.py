@@ -64,7 +64,7 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
     ori_df = pd.DataFrame(columns=[
         'stn', 'date', 'tmp', 'dew', 'stp', 'wpd',
         'count_tmp', 'count_dew', 'count_stp', 'count_wpd',
-        'max_tmp', 'min_tmp', 'prec'
+        'max_tmp', 'min_tmp', 'prec', 'sndp'
     ])
 
     # assign columns
@@ -82,20 +82,31 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
     ori_df.loc[:, 'count_dew'] = raw_df[6]
     ori_df.loc[:, 'count_stp'] = raw_df[10]
     ori_df.loc[:, 'count_wpd'] = raw_df[14]
-    ori_df.loc[:, 'max_tmp'] = [
-        (float(ind.replace('*', ''))-32.0)*5./9.
-        if ind != '9999.9' else float('nan')
-        for ind in raw_df[17]
-    ]
-    ori_df.loc[:, 'min_tmp'] = [
-        (float(ind.replace('*', ''))-32.0)*5./9.
-        if ind != '9999.9' else float('nan')
-        for ind in raw_df[18]
-    ]
-    ori_df.loc[:, 'prec'] = [
-        float(ind[:-1])*25.4 if ind != '99.99' else float('nan')
-        for ind in raw_df[19]
-    ]
+    if isinstance(raw_df[17][0], str):
+        ori_df.loc[:, 'max_tmp'] = [
+            (float(ind.replace('*', ''))-32.0)*5./9.
+            if ind != '9999.9' else float('nan')
+            for ind in raw_df[17]
+        ]
+    else:
+        ori_df.loc[:, 'max_tmp'] = \
+            (raw_df[17].replace(9999.9, float('nan'))-32.0)*5./9.
+    if isinstance(raw_df[18][0], str):
+        ori_df.loc[:, 'min_tmp'] = [
+            (float(ind.replace('*', ''))-32.0)*5./9.
+            if ind != '9999.9' else float('nan')
+            for ind in raw_df[18]
+        ]
+    else:
+        ori_df.loc[:, 'min_tmp'] = \
+            (raw_df[18].replace(9999.9, float('nan'))-32.0)*5./9.
+    if isinstance(raw_df[19][0], str):
+        ori_df.loc[:, 'prec'] = [
+            float(ind[:-1])*25.4 if ind != '99.99' else float('nan')
+            for ind in raw_df[19]
+        ]
+    else:
+        ori_df.loc[:, 'prec'] = raw_df[19].replace(99.99, float('nan'))*25.4
     # invalid values replaced by 0 snowfall
     ori_df.loc[:, 'sndp'] = raw_df[20].replace(999.9, 0.0)*25.4
 
