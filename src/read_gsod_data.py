@@ -68,7 +68,8 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
     ori_df.loc[:, 'tmp'] = (raw_df[3].replace(9999.9, float('nan'))-32.0)*5./9.
     ori_df.loc[:, 'dew'] = (raw_df[5].replace(9999.9, float('nan'))-32.0)*5./9.
     ori_df.loc[:, 'stp'] = raw_df[9].replace(9999.9, float('nan'))*100.0
-    ori_df.loc[:, 'wpd'] = raw_df[13].replace(999.9, float('nan'))*0.5144444444444
+    ori_df.loc[:, 'wpd'] = raw_df[13].replace(999.9, float('nan'))* \
+        0.5144444444444
     ori_df.loc[:, 'count_tmp'] = raw_df[4]
     ori_df.loc[:, 'count_dew'] = raw_df[6]
     ori_df.loc[:, 'count_stp'] = raw_df[10]
