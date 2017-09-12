@@ -19,13 +19,13 @@ import pandas as pd
 
 
 # user-defined modules
+from read_gsod_data import unzip_gsod_files
 
 
 # global variables
 
 
 # user-defined classes
-from read_gsod_data import unzip_gsod_files
 
 
 # user functions
@@ -58,17 +58,20 @@ def processing_monthly_data(tarfilename: str,
     finaldf = pd.DataFrame(columns=colnames)
 
     # calculate the values
+    total_files = len(dfsdict)
     for fileind, stn in enumerate(dfsdict):
         finaldf.loc[fileind, 'stn'] = stn
         df = dfsdict[stn]
+        print('Processing station ', stn, ' data')
+        print('Stage: ', (fileind+1.0)/total_files)
         for ind in range(1, 13):
             for txt in ['tmp', 'dew', 'stp', 'wpd', 'prec', 'sndp']:
                 finaldf.loc[fileind, ''.join([txt, '%02i' % ind, 'mean'])] = \
-                    df.loc[[dt.month==1 for dt in df['date']], txt].mean()
+                    df.loc[[dt.month==ind for dt in df['date']], txt].mean()
                 finaldf.loc[fileind, ''.join([txt, '%02i' % ind, 'max'])] = \
-                    df.loc[[dt.month==1 for dt in df['date']], txt].max()
+                    df.loc[[dt.month==ind for dt in df['date']], txt].max()
                 finaldf.loc[fileind, ''.join([txt, '%02i' % ind, 'min'])] = \
-                    df.loc[[dt.month==1 for dt in df['date']], txt].min()
+                    df.loc[[dt.month==ind for dt in df['date']], txt].min()
 
     return finaldf
 
@@ -78,6 +81,7 @@ if __name__ == '__main__':
 
     # test the gsod file tarball reader
     FINALDF = processing_monthly_data('../data/gsod/gsod_2016.tar')
+    FINALDF.to_csv('../results/gsod_2016_monthly.csv')
     print(FINALDF)
     print('simple_monthly_class.py is ok')
     

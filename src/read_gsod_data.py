@@ -113,7 +113,7 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
     return ori_df
 
 
-def unzip_gsod_files(tarfilename: str, numfile: float=float('nan')) -> list:
+def unzip_gsod_files(tarfilename: str, numfile: float=float('inf')) -> list:
     """
         This function reads the gsod files stored in the designated tar file
         and returns a dict of pandas DataFrame objects that contains all the
@@ -135,6 +135,10 @@ def unzip_gsod_files(tarfilename: str, numfile: float=float('nan')) -> list:
     # read the fire directory in the zipped file
     num = 0
     with tarfile.open(tarfilename, 'r') as maintar:
+        total_files = min(
+            sum(1 for member in maintar if member.isreg()), numfile
+        )
+        print('Number of files to be read: ', total_files)
         for maintarinfo in maintar:
             # extract one file at a time. One file for one station.
             # to reduce storage requirement
@@ -142,6 +146,8 @@ def unzip_gsod_files(tarfilename: str, numfile: float=float('nan')) -> list:
                 maintar.extractall(members=[maintarinfo])
                 # now read the extracted file
                 with gzip.open(maintarinfo.name) as fopened:
+                    print('Reading ', maintarinfo.name, ' data')
+                    print('Stage: ', (num+1.0)/total_files)
                     df = read_gsod_file(fopened)
                     dfdict[df['stn'][0]] = df
                     num += 1
