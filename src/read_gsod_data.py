@@ -73,6 +73,9 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
         date(int(str(text)[0:4]), int(str(text)[4:6]), int(str(text)[6:8]))
         for text in raw_df[2]
     ]
+    ori_df.loc[:, 'yr'] = [int(str(text)[0:4]) for text in raw_df[2]]
+    ori_df.loc[:, 'mn'] = [int(str(text)[4:6]) for text in raw_df[2]]
+    ori_df.loc[:, 'dy'] = [int(str(text)[6:8]) for text in raw_df[2]]
     ori_df.loc[:, 'tmp'] = (raw_df[3].replace(9999.9, float('nan'))-32.0)*5./9.
     ori_df.loc[:, 'dew'] = (raw_df[5].replace(9999.9, float('nan'))-32.0)*5./9.
     ori_df.loc[:, 'stp'] = raw_df[9].replace(9999.9, float('nan'))*100.0
@@ -145,9 +148,10 @@ def unzip_gsod_files(tarfilename: str, numfile: float=float('inf')) -> list:
             if '.gz' in maintarinfo.name:
                 maintar.extractall(members=[maintarinfo])
                 # now read the extracted file
-                with gzip.open(maintarinfo.name) as fopened:
-                    print('Reading ', maintarinfo.name, ' data')
-                    print('Stage: ', (num+1.0)/total_files)
+                with gzip.open(maintarinfo.name) as fopened:                    
+                    if num % 4 == 0:
+                        print('Reading ', maintarinfo.name, ' data')
+                        print('Stage: ', (num+1.0)/total_files)
                     df = read_gsod_file(fopened)
                     dfdict[df['stn'][0]] = df
                     num += 1

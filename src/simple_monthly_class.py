@@ -15,6 +15,7 @@
 
 
 # third party modules
+import numpy as np
 import pandas as pd
 
 
@@ -55,23 +56,24 @@ def processing_monthly_data(tarfilename: str,
         for txt in ['tmp', 'dew', 'stp', 'wpd', 'prec', 'sndp']:
             for cal in ['mean', 'max', 'min']:
                 colnames += [''.join([txt, '%02i' % ind, cal])]
-    finaldf = pd.DataFrame(columns=colnames)
+    total_files = len(dfsdict)
+    finaldf = pd.DataFrame(index=np.arange(total_files), columns=colnames)
 
     # calculate the values
-    total_files = len(dfsdict)
     for fileind, stn in enumerate(dfsdict):
         finaldf.loc[fileind, 'stn'] = stn
         df = dfsdict[stn]
-        print('Processing station ', stn, ' data')
-        print('Stage: ', (fileind+1.0)/total_files)
+        if fileind % 4 == 0:
+            print('Processing station ', stn, ' data')
+            print('Stage: ', (fileind+1.0)/total_files)
         for ind in range(1, 13):
             for txt in ['tmp', 'dew', 'stp', 'wpd', 'prec', 'sndp']:
                 finaldf.loc[fileind, ''.join([txt, '%02i' % ind, 'mean'])] = \
-                    df.loc[[dt.month==ind for dt in df['date']], txt].mean()
+                    df.loc[df['mn'] == ind, txt].mean()
                 finaldf.loc[fileind, ''.join([txt, '%02i' % ind, 'max'])] = \
-                    df.loc[[dt.month==ind for dt in df['date']], txt].max()
+                    df.loc[df['mn'] == ind, txt].max()
                 finaldf.loc[fileind, ''.join([txt, '%02i' % ind, 'min'])] = \
-                    df.loc[[dt.month==ind for dt in df['date']], txt].min()
+                    df.loc[df['mn'] == ind, txt].min()
 
     return finaldf
 
