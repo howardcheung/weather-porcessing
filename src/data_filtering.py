@@ -81,13 +81,19 @@ def read_history(histfilename: str) -> pd.DataFrame:
     """
 
     # read file
-    return pd.read_fwf(
+    df = pd.read_fwf(
         histfilename, widths=[7, 6, 30, 5, 3, 5, 9, 9, 8, 9, 9],
         header=0, skiprows=21, names=[
             'USAF', 'WBAN', 'STN_NM', 'CTRY', 'ST', 'CALL', 'LAT', 'LON',
             'ELEV', 'BEGIN', 'END'
         ]
     )
+    # combine string
+    df.loc[:, 'stn'] = [
+        ''.join(['%06i' % stn, ' ', '%05i' % wban])
+        for stn, wban in zip(df['USAF'], df['WBAN'])
+    ]
+    return df
 
 
 # testing functions
