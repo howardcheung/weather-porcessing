@@ -33,7 +33,7 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
     """
         This function reads a GSOD data file and return a pandas DataFrame
         with the following columns:
-            stn: station number in int
+            stn: station number and wban in str
             date: date value of the data point in datetime.date object
             tmp: mean temperature in K
             dew: mean dewpoint temperature in K
@@ -68,7 +68,10 @@ def read_gsod_file(filename: str) -> pd.DataFrame:
     ])
 
     # assign columns
-    ori_df.loc[:, 'stn'] = raw_df[0]
+    ori_df.loc[:, 'stn'] = [
+        ''.join(['%06i' % stn, ' ', '%05i' % wban])
+        for stn, wban in zip(raw_df[0], raw_df[1])
+    ]
     ori_df.loc[:, 'date'] = [
         date(int(str(text)[0:4]), int(str(text)[4:6]), int(str(text)[6:8]))
         for text in raw_df[2]
