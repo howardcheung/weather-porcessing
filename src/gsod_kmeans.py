@@ -32,8 +32,9 @@ ResultTuple = namedtuple('ResultTuple', ['centroids', 'classes'])
 
 # user functions
 def kmeans_classify(filename: str, centroidfilename: str,
-                    classfilename: str,
-                    numclasses: int, numdatapts: int=None) -> ResultTuple:
+                    classfilename: str, numclasses: int, 
+                    inclist: list=['tmp', 'dew', 'stp', 'wpd', 'prec', 'sndp'],
+                    numdatapts: int=None) -> ResultTuple:
     """
         This function reads the filtered monthly gsod data and return
         a collections.namedtuple with the following attributes:
@@ -55,6 +56,11 @@ def kmeans_classify(filename: str, centroidfilename: str,
         numclasses: int
             number of classes
 
+        inclist: list
+            list of str indicating what variables should be included. This
+            includes:
+                'tmp', 'dew', 'stp', 'wpd', 'prec', 'sndp'
+
         numdatapts: int
             number of data points to be used. Default None (all data points)
     """
@@ -62,7 +68,13 @@ def kmeans_classify(filename: str, centroidfilename: str,
     # create x array
     df = pd.read_csv(filename, index_col='stn')
     df = df.drop('Unnamed: 0', axis=1)
-    xarray = np.array(df)[:, 1:]  # remove index column
+    cols = []
+    for col in df.columns:
+        for colnm in inclist:
+            if colnm in col:
+                cols.append(col)
+    df = df.loc[:, cols]
+    xarray = np.array(df)
     if numdatapts is not None:
         xarray = xarray[:numdatapts, :]
 
@@ -70,7 +82,7 @@ def kmeans_classify(filename: str, centroidfilename: str,
     centroids, classes = kmeans2(xarray, numclasses)
 
     # create new df
-    centroiddf = pd.DataFrame(centroids, columns=df.columns[1:])
+    centroiddf = pd.DataFrame(centroids, columns=df.columns)
     df.loc[df.index[0:len(classes)], 'classes'] = classes
 
     # save files
@@ -87,7 +99,7 @@ if __name__ == '__main__':
         '../results/gsod_filtered.csv',
         '../results/gsod_kmeans_centroids.csv',
         '../results/gsod_kmeans_classes.csv',
-        19
+        19, inclist = ['tmp', 'dew', 'stp', 'wpd']
     )
     print(RESULTS.classes)
     print(RESULTS.centroids)
