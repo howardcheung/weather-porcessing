@@ -135,7 +135,9 @@ def shift_data(filtereddf: pd.DataFrame, locdf: pd.DataFrame,
                     south_ind, fut_mn
                 ]
                 overall_df.loc[south_ind, fut_mn] = temp_series
-        
+
+    # save the data
+    overall_df.to_csv(filename)
     return overall_df
 
 
@@ -150,7 +152,9 @@ if __name__ == '__main__':
 
     # check if the columns are switched
     OVERALL_DF_OLD = FILTERED_DF.merge(HISTORY_DF, how='inner', on='stn')
-    OVERALL_DF_NEW = shift_data(FILTERED_DF, HISTORY_DF, '')
+    OVERALL_DF_NEW = shift_data(
+        FILTERED_DF, HISTORY_DF, '../results/gsod_shift.csv'
+    )
     SOUTH_IND = OVERALL_DF_OLD['LAT'] < 0.0
     assert (OVERALL_DF_OLD.loc[SOUTH_IND, 'tmp01mean'] == \
         OVERALL_DF_NEW.loc[SOUTH_IND, 'tmp07mean']).all()
