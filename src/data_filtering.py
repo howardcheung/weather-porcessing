@@ -102,9 +102,10 @@ if __name__ == '__main__':
     FILTERED_DF = datafiltering(
         '../results/gsod_2016_monthly.csv', '../results/gsod_filtered.csv'
     )
-    print(FILTERED_DF)
 
     HISTORY_DF = read_history('../data/gsod/isd-history.txt')
-    print(HISTORY_DF)
+
+    OVERALL_DF = FILTERED_DF.merge(HISTORY_DF, how='inner', on='stn')
+    print(OVERALL_DF)
     print('data_filteirng.py is ok')
     
