@@ -73,8 +73,8 @@ def kmeans_classify(filename: str, centroidfilename: str,
         for colnm in inclist:
             if colnm in col:
                 cols.append(col)
-    df = df.loc[:, cols]
-    xarray = np.array(df)
+    newdf = df.loc[:, cols]
+    xarray = np.array(newdf)
     if numdatapts is not None:
         xarray = xarray[:numdatapts, :]
 
@@ -82,7 +82,7 @@ def kmeans_classify(filename: str, centroidfilename: str,
     centroids, classes = kmeans2(xarray, numclasses)
 
     # create new df
-    centroiddf = pd.DataFrame(centroids, columns=df.columns)
+    centroiddf = pd.DataFrame(centroids, columns=newdf.columns)
     df.loc[df.index[0:len(classes)], 'classes'] = classes
 
     # save files
@@ -96,7 +96,7 @@ def kmeans_classify(filename: str, centroidfilename: str,
 if __name__ == '__main__':
 
     RESULTS = kmeans_classify(
-        '../results/gsod_filtered.csv',
+        '../results/gsod_shift.csv',
         '../results/gsod_kmeans_centroids.csv',
         '../results/gsod_kmeans_classes.csv',
         19, inclist = ['tmp', 'dew', 'stp', 'wpd']
