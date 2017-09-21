@@ -96,6 +96,49 @@ def read_history(histfilename: str) -> pd.DataFrame:
     return df
 
 
+def shift_data(filtereddf: pd.DataFrame, locdf: pd.DataFrame,
+               filename: str) -> pd.DataFrame:
+    """
+        This function merges the filtered weather data pandas DataFrame and
+        the location dataframe, and shift the data for 6 months if the
+        location is in the southern Hemisphere. Return the merged and shift
+        pandas DataFrame
+
+        Inputs:
+        ==========
+        filtereddf: pandas DataFrame
+            filtereddf from datafiltering()
+
+        locdf: pandas DataFrame
+            location datafrane from read_history()
+
+        filename: str
+            name of the file to be stored
+    """
+
+    # merge the dataframe
+    overall_df = filtereddf.merge(locdf, how='inner', on='stn')
+
+    # find the data with latitude < 0
+    south_ind = overall_df['LAT'] < 0.0
+
+    # shift the series
+    for ind in range(1, 7):
+        for txt in ['tmp', 'dew', 'stp', 'wpd', 'prec', 'sndp']:
+            for suffix in ['mean', 'max', 'min']:
+                now_mn = ''.join([txt, '%02i' % ind, suffix])
+                fut_mn = ''.join([txt, '%02i' % (ind+6), suffix])
+                temp_series = overall_df.loc[
+                    south_ind, now_mn
+                ]
+                overall_df.loc[south_ind, now_mn] = overall_df.loc[
+                    south_ind, fut_mn
+                ]
+                overall_df.loc[south_ind, fut_mn] = temp_series
+        
+    return overall_df
+
+
 # testing functions
 if __name__ == '__main__':
 
@@ -105,7 +148,14 @@ if __name__ == '__main__':
 
     HISTORY_DF = read_history('../data/gsod/isd-history.txt')
 
-    OVERALL_DF = FILTERED_DF.merge(HISTORY_DF, how='inner', on='stn')
-    print(OVERALL_DF)
+    # check if the columns are switched
+    OVERALL_DF_OLD = FILTERED_DF.merge(HISTORY_DF, how='inner', on='stn')
+    OVERALL_DF_NEW = shift_data(FILTERED_DF, HISTORY_DF, '')
+    SOUTH_IND = OVERALL_DF_OLD['LAT'] < 0.0
+    assert (OVERALL_DF_OLD.loc[SOUTH_IND, 'tmp01mean'] == \
+        OVERALL_DF_NEW.loc[SOUTH_IND, 'tmp07mean']).all()
+    assert (OVERALL_DF_OLD.loc[SOUTH_IND, 'tmp07mean'] == \
+        OVERALL_DF_NEW.loc[SOUTH_IND, 'tmp01mean']).all()
+    
     print('data_filteirng.py is ok')
     
